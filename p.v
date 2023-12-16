@@ -39,10 +39,10 @@ add_32 block1(in1,in2,cin1,v1,r2[0]); // Adder
 add_32 block2(in1,in2,cin2,v2,r2[1]); // Subtractor
 mult_32 block3(in1,in2,u); // Multiplier
 div_32 block4(in2,in1,v3,v4); // v3-->Quotient v4-->Remainder
-comp_32 block5(in1,in2,r1[2:0]); // Comparator
 for(lp=0;lp<=31;lp=lp+1) begin
     assign v5[lp]=~(in1[lp]&in2[lp]); // Nand logic operation
     assign v6[lp]=~(in1[lp]|in2[lp]); // Nor logic operation
+    assign r1[lp]=~(in1[lp]^in2[lp]); // XNOR logic operation
 end
 mux multiplexer(v1,v2,u,v3,v4,r1,v5,v6,cnt,op);
 endmodule
@@ -333,37 +333,6 @@ assign Co=(a&(~b))|((~b)&Cin)|(a&Cin);
 assign z=(a&(~sel))|(x&sel);
 endmodule
 
-/* 32-Bit Comparator*/
-module comp_32(a,b,result);
-output [2:0]result;   // g--> greater than.    e-->equals to.    l-->less than.
-input [31:0]a,b;
-wire [31:0]x,y,z;
-reg g,e,l;
-genvar i,m,n,w;
-integer j;
-for(i=0;i<=31;i=i+1) begin
-    xnor(y[i],a[i],b[i]);
-end
-and(x[31],a[31],~b[31]),(z[31],~a[31],b[31]);
-for(m=30;m>=0;m=m-1) begin
-    for(n=m+1;n<=30;n=n+1) begin
-        and(x[m],y[n],a[m],~b[m]);
-        and(z[m],y[n],~a[m],b[m]);
-    end
-end
-always@ * begin
-    g=x[0];
-    e=y[0];
-    l=z[0];
-    for(j=1;j<=31;j=j+1) begin
-        g=g|x[j];
-        e=e&y[j];
-        l=l|z[j];
-    end
-end
-assign result={g,e,l};
-endmodule
-
 /* 64-Bus and 32-Bus input 8:1 Mux */
 module mux(In1,In2,In3,In4,In5,In6,In7,In8,s1,Z1);
 output [63:0]Z1;
@@ -617,11 +586,4 @@ always@ * begin
         1'b1:c=b;
     endcase
 end
-endmodule
-
-module t;
-reg clk;
-RISC_Processor RISC(clk);
-initial clk=0;
-always #10 clk=~clk;
 endmodule
